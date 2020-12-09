@@ -12,6 +12,7 @@ spec:
     port: {{ .Values.service.port }}
     protocol: TCP
     targetPort: {{ .Values.service.port }}
+    nodePort: {{ .Values.service.nodeport }}
   selector:
     app: {{ .Values.app }}
   type: {{ .Values.service.type }}
