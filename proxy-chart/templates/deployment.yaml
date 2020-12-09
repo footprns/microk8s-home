@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app }}
+  name: {{ .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app }}
+    spec:
+      containers:
+      - image: {{ .Values.image.repository }}
+        name: {{ .Values.image.name }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+        volumeMounts:
+        - name: {{ .Values.app }}-vol
+          mountPath: /var/spool/squid
+        - name: {{ .Values.app }}-configmap
+          mountPath: /etc/squid
+        resources: {}
+      volumes:
+      - name: {{ .Values.app }}-vol
+        persistentVolumeClaim:
+          claimName: {{ .Values.app }}-pvc
+      - name: {{ .Values.app }}-configmap
+        configMap:
+          # Provide the name of the ConfigMap containing the files you want
+          # to add to the container
+          name: {{ .Values.app }}-configmap
+          items:
+          - key: squid.conf
+            path: squid.conf
+    
+status: {}

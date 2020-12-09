@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  squid.conf: |-
+
+
+    ## The videos come from several domains
+    acl youtube_domains dstdomain .youtube.com .googlevideo.com .ytimg.com .www.youtube.com .m.youtube.com
+
+    ## G* services authentication domain
+    acl gLogin dstdomain accounts.youtube.com
+    http_access deny youtube_domains !gLogin
+
+    # allow all requests    
+    acl all src 0.0.0.0/0
+    http_access allow all
+
+    # Make sure your custom config is before the "deny all" line
+    # http_access deny all
+
+    # Squid normally listens to port 3128
+    http_port 3128
+
+    # Leave coredumps in the first cache dir
+    coredump_dir /var/spool/squid
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: {{ .Values.namespace }}-configmap
+  namespace: {{ .Values.namespace }}
