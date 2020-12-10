@@ -11,7 +11,7 @@ data:
     http_access deny youtube_domains !gLogin
 
     # allow all requests    
-    acl all src 0.0.0.0/0
+    acl all src all
     http_access allow all
 
     # Make sure your custom config is before the "deny all" line

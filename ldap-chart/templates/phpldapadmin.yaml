@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.phpldapadmin.name }}
+  name: {{ .Values.app.phpldapadmin.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.phpldapadmin.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.phpldapadmin.name }}
+    spec:
+      containers:
+      - image: {{ .Values.app.phpldapadmin.image.repository }}
+        name: {{ .Values.app.phpldapadmin.name }}
+        ports:
+        {{- range .Values.app.phpldapadmin.service.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        env:
+        {{- range .Values.app.phpldapadmin.env }}
+        - name: {{ .name}}
+          value: {{ .value }}
+        {{- end}}
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.phpldapadmin.name }}
+  name: {{ .Values.app.phpldapadmin.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.phpldapadmin.service.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.phpldapadmin.name }}
+  type: {{ .Values.app.phpldapadmin.service.type }}
+status:
+  loadBalancer: {}

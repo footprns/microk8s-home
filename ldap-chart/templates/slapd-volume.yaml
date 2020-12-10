@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.app.ldap.volumes.slapd.name }}
+  # annotations:
+  #   pv.beta.kubernetes.io/gid: "501"
+spec:
+  capacity:
+    storage: {{ .Values.app.ldap.volumes.slapd.size }}
+  volumeMode: Filesystem
+  accessModes:
+  - {{ .Values.app.ldap.volumes.slapd.access }}
+  storageClassName: hostpath
+  local:
+    path: {{ .Values.app.ldap.volumes.slapd.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - latitude
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.app.ldap.volumes.slapd.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes:
+    - {{ .Values.app.ldap.volumes.slapd.access }}
+  volumeMode: Filesystem
+  storageClassName: hostpath
+  resources:
+    requests:
+      storage: {{ .Values.app.ldap.volumes.slapd.size }}
