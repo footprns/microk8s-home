@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.nfsserver.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: {{ .Values.app.nfsserver.name }}
+  template:
+    metadata:
+      labels:
+        role: {{ .Values.app.nfsserver.name }}
+    spec:
+      containers:
+      - name: {{ .Values.app.nfsserver.name }}
+        image: {{ .Values.app.nfsserver.image }}
+        ports:
+        {{- range .Values.app.nfsserver.ports }}
+        - containerPort: {{ .port }}
+          name: {{ .name }}
+        {{- end}}
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - mountPath: /exports
+            name: mypvc
+      volumes:
+        - name: mypvc
+          emptyDir: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.app.nfsserver.name }}
+spec:
+  ports:
+    {{- range .Values.app.nfsserver.ports }}
+    - port: {{ .port }}
+      name: {{ .name }}
+    {{- end}}
+  selector:
+    role: {{ .Values.app.nfsserver.name }}

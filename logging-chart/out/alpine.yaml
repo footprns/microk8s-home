@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: alpine
+  name: alpine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alpine
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: alpine
+    spec:
+      containers:
+      - image: alpine
+        name: alpine
+        command: ["sleep", "100000"]
+        securityContext:
+            privileged: true        
+        resources: {}
+status: {}

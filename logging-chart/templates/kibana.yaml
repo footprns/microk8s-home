@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.kibana.name }}
+  name: {{ .Values.app.kibana.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.kibana.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.kibana.name }}
+    spec:
+      containers:
+      - image: {{ .Values.app.kibana.image }}
+        name: {{ .Values.app.kibana.name }}
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: http://{{ .Values.app.elasticsearch.name }}:9200
+        ports:
+        {{- range .Values.app.kibana.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.kibana.name }}
+  name: {{ .Values.app.kibana.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.kibana.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end}}
+  selector:
+    app: {{ .Values.app.kibana.name }}
+  type: NodePort
+status:
+  loadBalancer: {}

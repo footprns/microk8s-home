@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ labels:
+   app: {{ .Values.app.tomcat.name }}
+   component: filebeat
+ name: {{ .Values.app.tomcat.name }}-filebeat-sidecar-config
+ namespace: {{ .Values.namespace }}
+data:
+  filebeat.yml: |
+    filebeat:
+      config:
+        modules:
+          path: /usr/share/filebeat/modules.d/*.yml
+          reload:
+            enabled: true
+      modules:
+      - module: apache
+        access:
+          enabled: true
+          var.paths:
+          - "/usr/local/tomcat/logs/localhost_access_log.*.txt"
+        error:
+          enabled: true
+          var.paths:
+          - "/usr/local/tomcat/logs/application.log*"
+          - "/usr/local/tomcat/logs/catalina.*.log"
+          - "/usr/local/tomcat/logs/host-manager.*.log"
+          - "/usr/local/tomcat/logs/localhost.*.log"
+          - "/usr/local/tomcat/logs/manager.*.log"
+    output:
+      elasticsearch:
+        host: '${NODE_NAME}'
+        # hosts: '${ELASTICSEARCH_HOSTS:elasticsearch-master.elastic-system:9200}'
+        hosts: '${ELASTICSEARCH_HOSTS}:9200'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.tomcat.name }}
+  name: {{ .Values.app.tomcat.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.tomcat.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.tomcat.name }}
+    spec:
+      containers:
+      - name: {{ .Values.app.filebeat.name }}
+        image: {{ .Values.app.filebeat.image }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: ELASTICSEARCH_HOSTS
+          value: {{ .Values.app.elasticsearch.name }}
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /usr/local/tomcat/logs
+        - name: filebeat-config
+          mountPath: /usr/share/filebeat/filebeat.yml
+          subPath: filebeat.yml
+      - image: {{ .Values.app.tomcat.image }}
+        name: {{ .Values.app.tomcat.name }}
+        ports:
+        {{- range .Values.app.tomcat.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /usr/local/tomcat/logs
+        resources: {}
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+      - name: filebeat-config
+        configMap:
+          name: {{ .Values.app.tomcat.name }}-filebeat-sidecar-config
+          items:
+            - key: filebeat.yml
+              path: filebeat.yml
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.tomcat.name }}
+  name: {{ .Values.app.tomcat.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.tomcat.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.tomcat.name }}
+  type: ClusterIP
+status:
+  loadBalancer: {}

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app }}
+  name: {{ .Values.app }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app }}
+    spec:
+      containers:
+      - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        name: {{ .Values.app }}
+        securityContext: 
+          capabilities:
+            add: [{{ template "pathtoexclude" . }}]
+        env:
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          value: myroot
+        - name: VAULT_DEV_LISTEN_ADDRESS
+          value: 0.0.0.0:{{ .Values.service.port }}
+        - name: VAULT_LOCAL_CONFIG
+          value: "{\"backend\": {\"file\": {\"path\": \"/vault/file\"}}, \"default_lease_ttl\": \"168h\", \"max_lease_ttl\": \"720h\"}"
+        volumeMounts:
+        - mountPath: /vault/file
+          name: {{ .Values.app }}
+        resources: {}
+      volumes:
+      - name: {{ .Values.app }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.app }}
+
+status: {}

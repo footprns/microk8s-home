@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.elasticsearch.name }}
+  name: {{ .Values.app.elasticsearch.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.elasticsearch.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.elasticsearch.name }}
+    spec:
+      containers:
+      - image: {{ .Values.app.elasticsearch.image }}
+        name: {{ .Values.app.elasticsearch.name }}
+        ports:
+        {{- range .Values.app.elasticsearch.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        env:
+        - name: discovery.type
+          value: single-node
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.elasticsearch.name }}
+  name: {{ .Values.app.elasticsearch.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.elasticsearch.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.elasticsearch.name }}
+  type: ClusterIP
+status:
+  loadBalancer: {}

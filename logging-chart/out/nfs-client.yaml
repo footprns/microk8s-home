@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: nfs-client
+  name: nfs-client
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nfs-client
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: nfs-client
+    spec:
+      containers:
+      - image: busybox
+        command:
+          - sh
+          - -c
+          - 'while true; do date > /mnt/index.html; hostname >> /mnt/index.html; sleep $(($RANDOM % 5 + 5)); done'
+        name: busybox
+        securityContext:
+            privileged: true
+        volumeMounts:
+          - name: nfs
+            mountPath: "/mnt"
+        resources: {}
+      volumes:
+      # - name: nfs
+      #   persistentVolumeClaim:
+      #     claimName: nfs
+      - name: nfs
+        emptyDir: {}
+status: {}

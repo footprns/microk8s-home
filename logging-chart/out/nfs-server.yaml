@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nfsserver.name }}
+  name: {{ .Values.app.nfsserver.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.nfsserver.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.nfsserver.name }}
+    spec:
+      containers:
+      - name: {{ .Values.app.nfsserver.name }}
+        image: {{ .Values.app.nfsserver.image }}
+        ports:
+        {{- range .Values.app.nfsserver.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        securityContext:
+            capabilities:
+                add: ["SYS_ADMIN", "SETPCAP"]
+        env:
+        - name: NFS_DOMAIN
+          value: "0.0.0.0/0"
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /nfs-share
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nfsserver.name }}
+  name: {{ .Values.app.nfsserver.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.nfsserver.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.nfsserver.name }}
+  type: ClusterIP
+status:
+  loadBalancer: {}

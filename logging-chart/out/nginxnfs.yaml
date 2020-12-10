@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nginxnfs.name }}
+  name: {{ .Values.app.nginxnfs.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.nginxnfs.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.nginxnfs.name }}
+    spec:
+      containers:
+      - image: {{ .Values.app.nginxnfs.image }}
+        name: {{ .Values.app.nginxnfs.name }}
+        securityContext:
+            privileged: true
+        ports:
+        {{- range .Values.app.nginxnfs.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /var/log/nginx
+        # - name: logs-volume01
+        #   mountPath: /var/log/nginx01
+        resources: {}
+      volumes:
+      - name: logs-volume
+        emptyDir: {}
+      - name: nfs
+        persistentVolumeClaim:
+          claimName: {{ .Values.app.nfsserver02.name }}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nginxnfs.name }}
+  name: {{ .Values.app.nginxnfs.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.nginxnfs.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.nginxnfs.name }}
+  type: ClusterIP
+status:
+  loadBalancer: {}

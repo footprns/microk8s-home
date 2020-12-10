@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nfsserver02.name }}
+  name: {{ .Values.app.nfsserver02.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.nfsserver02.name }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app.nfsserver02.name }}
+    spec:
+      containers:
+      - name: {{ .Values.app.nfsserver02.name }}
+        image: {{ .Values.app.nfsserver02.image }}
+        ports:
+        {{- range .Values.app.nfsserver02.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        securityContext:
+            privileged: true
+        volumeMounts:
+        - name: mypvc
+          mountPath: /exports
+      volumes:
+      - name: mypvc
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app.nfsserver02.name }}
+  name: {{ .Values.app.nfsserver02.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.app.nfsserver02.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app.nfsserver02.name }}
+  type: ClusterIP
+status:
+  loadBalancer: {}

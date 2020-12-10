@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - hard
+    # - nfsvers=4.1
+    - nfsvers=3
+  nfs:
+    server: {{ .Values.app.nfsserver.name }}.default.svc.cluster.local
+    path: "/"
