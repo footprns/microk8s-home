@@ -70,7 +70,7 @@ vault unseal -address=http://127.0.0.1:8200
 
 
 vault  write -address=http://127.0.0.1:8200 auth/ldap/config \
-    url="ldap://ldap" \
+    url="ldap://ldap.ldap" \
     binddn="cn=admin,dc=my-company,dc=com" \
     userattr="uid" \
     bindpass='JonSn0w' \

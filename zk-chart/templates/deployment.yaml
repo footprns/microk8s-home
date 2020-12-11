@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app }}
+  name: {{ .Values.app }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app }}
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Values.app }}
+    spec:
+      containers:
+      - image: {{ .Values.image.repository }}
+        name: {{ .Values.app }}
+        ports:
+        {{- range .Values.service.ports }}
+        - containerPort: {{ .port }}
+        {{- end}}
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: {{ .Values.app }}
+  name: {{ .Values.app }}-svc
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  {{- range .Values.service.ports }}
+  - name: "{{ .port }}"
+    port: {{ .port }}
+    protocol: TCP
+    targetPort: {{ .port }}
+  {{- end }}
+  selector:
+    app: {{ .Values.app }}
+  type: {{ .Values.service.type }}
+status:
+  loadBalancer: {}
